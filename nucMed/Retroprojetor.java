@@ -2,12 +2,10 @@ package nucMed;
 
 import ij.gui.NewImage;
 import ij.process.ImageProcessor;
-import ij.IJ;
-import funcoesNM.*;
 
 /**
- * Classe Utilizada no algoritmo MLEM.
- * 
+ *Classe Utilizada no algoritmo MLEM.
+ *
  * @author Michele Alberton Andrade, Marcus Vinicius da Silva Costa
  * @version <b> 1.7</b>
  */
@@ -57,35 +55,8 @@ public class Retroprojetor {
 		view180 = (int) (0.5 * nproj);
 		view270 = (int) (0.75 * nproj);
 
-	}
-
-	public Retroprojetor(ImageProcessor ip, ImageProcessor ipMapa) {
-
-		p_sino = ip;
-		p_mapa = ipMapa;
-
-		dim = p_sino.getWidth();
-		nproj = p_sino.getHeight();
-		xmax = ((dim + 1) - 2) / 2;
-
-		imagem = NewImage.createFloatImage("Imagem", dim, dim, 1,
-				NewImage.FILL_BLACK);
-		p_img = imagem.getProcessor();
-		
-		imgpixels = (float[]) p_img.getPixels();
-		
-		/*
-		 * Por que "sinopixels" esta recebendo 1 (um) ???
-		 * "sinopixels" nao deveria estar recebendo os valores do sinograma, ou seja, diferente de 1 (um)?
-		 */		
-		sinopixels = (float[]) p_sino.getPixels();
-		
-		//a variavel "mapa" possui valores 0,125 (no caso do mapa de atenuacao da agua, por exemplo)
-		mapa = (float[]) p_mapa.getPixels();
-
-		view90 = (int) (0.25 * nproj);
-		view180 = (int) (0.5 * nproj);
-		view270 = (int) (0.75 * nproj);
+		// ij.IJ.showMessage("view90= "+view90+"\nview180= "+view180+"\nview270=
+		// "+view270);
 	}
 
 	/**
@@ -93,44 +64,28 @@ public class Retroprojetor {
 	 * 
 	 * @return Imagem Retroprojetada.
 	 */
-	public ImageProcessor retroProjetar(boolean comMapa) {
+	public ImageProcessor retroProjetar() {
 
-		if (!comMapa) {
-			view0(sinopixels);
-			quadrante1(sinopixels);
-			view90(sinopixels);
-			quadrante2(sinopixels);
-			view180(sinopixels);
-			quadrante3(sinopixels);
-			view270(sinopixels);
-			quadrante4(sinopixels);
-		} else {
-			//view0(mapa, sinopixels);
-			view90(mapa, sinopixels);
-			//view180(mapa, sinopixels);
-			//view270(mapa, sinopixels);
-			//quadrante1(mapa, sinopixels);
-			//quadrante2(mapa, sinopixels);
-			//quadrante3(mapa, sinopixels);
-			quadrante4(mapa, sinopixels);
-		}
+		view0(sinopixels);
 
-		/*
-		 * for(int x=0;x<64;x++){ IJ.log("imgpixels["+x+"]= " +imgpixels[x]);
-		 * IJ.log("getPixels["+x+"]= " +p_img.getPixel(0,x)); }
-		 */
+		view90(sinopixels);
 
-//		for (int a = 0; a < imgpixels.length; a++)
-//			imgpixels[a] /= (float)(4 * nproj);
+		view180(sinopixels);
 
-		/*
-		 * for(int x=0;x<64;x++){ IJ.log("imgpixels_div["+x+"]= "
-		 * +imgpixels[x]); IJ.log("getPixels_div["+x+"]= "
-		 * +p_img.getPixel(0,x)); }
-		 */
+		view270(sinopixels);
 
-		
-		//verificar se esta em branco ao efetuar os calculos de retroprojecao
+		quadrante1(sinopixels);
+
+		quadrante2(sinopixels);
+
+		quadrante3(sinopixels);
+
+		quadrante4(sinopixels);
+
+		float[] aImagem = (float[]) p_img.getPixels();
+		for (int a = 0; a < aImagem.length; a++)
+			aImagem[a] = aImagem[a] / nproj;
+
 		p_img.resetMinAndMax();
 
 		return p_img;
@@ -140,7 +95,7 @@ public class Retroprojetor {
 	 * Método para fazer view zero sem correcão de atenuação
 	 * 
 	 * @param sinopixels
-	 *            array float com os valores da imagem
+	 *          array float com os valores da imagem
 	 */
 	public void view0(float[] sinopixels) {
 
@@ -148,22 +103,15 @@ public class Retroprojetor {
 		int xmax = (dim - 2) / 2;
 		int view = 0;
 		double x;
-		for (x = xmax; x < xmax; x++) {
-			// for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
+		// for( x= xmax; x < xmax; x++) {
+		for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
 			int s = (int) (Math.floor(x + 0.5));
 			ymax = (int) Math.sqrt(Math.pow(xmax, 2) - Math.pow(s, 2));
 			for (int y = -ymax; y <= ymax; y++) {
 
-				int p1 = Funcoes.mudaCoord(view, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(y, s, false, xmax, dim);
-
-				// if (Float.isNaN(imgpixels[p2]))
-				// imgpixels[p2] = 0;
-				// if (Float.isInfinite(imgpixels[p2]))
-				// imgpixels[p2] = 0;
-
-				if (!Float.isNaN(sinopixels[p1]))
-					imgpixels[p2] += sinopixels[p1];
+				int p1 = mudaCoord(view, s, true);
+				int p2 = mudaCoord(y, s, false);
+				imgpixels[p2] += sinopixels[p1];
 			}
 		}
 	}
@@ -179,15 +127,14 @@ public class Retroprojetor {
 		int s, fovmax;
 		int xmax = (dim - 2) / 2;
 		double x;
-		for (x = -xmax; x < xmax; x++) {
-			// for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
+		// for( x= -xmax; x < xmax; x++) {
+		for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
 			s = (int) (Math.floor(x + 0.5));
 			fovmax = (int) Math.sqrt(Math.pow(xmax, 2) - Math.pow(x, 2));
 			for (int y = -fovmax; y <= +fovmax; y++) {
-				int p1 = Funcoes.mudaCoord(view90, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(s, -y, false, xmax, dim);
-				if (!Float.isNaN(sinopixels[p1]))
-					imgpixels[p2] += sinopixels[p1];
+				int p1 = mudaCoord(view90, s, true);
+				int p2 = mudaCoord(s, -y, false);
+				imgpixels[p2] += sinopixels[p1];
 			}
 		}
 	}
@@ -203,15 +150,14 @@ public class Retroprojetor {
 		int s, ymax;
 		int xmax = (dim - 2) / 2;
 		double x;
-		for (x = -xmax; x < xmax; x++) {
-			// for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
+		// for( x= -xmax; x < xmax; x++) {
+		for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
 			s = (int) (Math.floor(x + 0.5));
 			ymax = (int) Math.sqrt(Math.pow(xmax, 2) - Math.pow(s, 2));
 			for (int y = ymax; y >= -ymax; y--) {
-				int p1 = Funcoes.mudaCoord(view180, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(y, -s, false, xmax, dim);
-				if (!Float.isNaN(sinopixels[p1]))
-					imgpixels[p2] += sinopixels[p1];
+				int p1 = mudaCoord(view180, s, true);
+				int p2 = mudaCoord(y, -s, false);
+				imgpixels[p2] += sinopixels[p1];
 			}
 		}
 	}
@@ -227,22 +173,20 @@ public class Retroprojetor {
 		int s, ymax;
 		int xmax = (dim - 2) / 2;
 		double x;
-		for (x = xmax; x < xmax; x++) {
-			// for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
+		// for( x= xmax; x < xmax; x++) {
+		for (x = -xmax + 0.625; x < xmax - 0.625; x++) {
 			s = (int) (Math.floor(x + 0.5));
 			ymax = (int) Math.sqrt(Math.pow(xmax, 2) - Math.pow(x, 2));
 			for (int y = -ymax; y <= ymax; y++) {
-				int p1 = Funcoes.mudaCoord(view270, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(-s, y, false, xmax, dim);
-				if (!Float.isNaN(sinopixels[p1]))
-					imgpixels[p2] += sinopixels[p1];
+				int p1 = mudaCoord(view270, s, true);
+				int p2 = mudaCoord(-s, y, false);
+				imgpixels[p2] += sinopixels[p1];
 			}
 		}
 	}
 
 	/**
-	 * Método para Quadrante um - view0 até view89 - sem correção de
-	 * atenuação
+	 * Método para Quadrante um - view0 até view89 - sem correção de atenuação
 	 * 
 	 * @param sinopixels
 	 *            array float com os valores da imagem
@@ -262,7 +206,7 @@ public class Retroprojetor {
 			phi = (float) ((view * 2 * Math.PI) / (nproj));
 			sphi = (float) Math.sin(phi);
 			cphi = (float) Math.cos(phi);
-			for (x = (float) (-xmax + 0.625); x <= (float) (xmax - 0.625); x += 0.25) {
+			for (x = (float) (-xmax + 0.425); x <= (float) (xmax - 0.425); x += 0.25) {
 				// for (x=(float)(-xmax); x<=(float)(xmax); x++) {
 				float fov = (float) Math.sqrt(Math.pow(xmax, 2)
 						- Math.pow(x, 2));
@@ -290,7 +234,7 @@ public class Retroprojetor {
 				ax[0] = (x1 - min_x) * i_dx;
 				int k = 1;
 				while (k <= kmax) {
-					ax[k] = ax[k - 1] + i_dx; // mi.write(ax[k]+" ");
+					ax[k] = ax[k - 1] + i_dx;
 					k++;
 				}
 				kmax = (int) (1 + max_y - min_y);
@@ -299,7 +243,7 @@ public class Retroprojetor {
 				k = 1;
 				kmax = (int) (1 + max_y - min_y);
 				while (k <= kmax) {
-					ay[k] = ay[k - 1] + i_dy; // mi.write(ay[k]+" ");
+					ay[k] = ay[k - 1] + i_dy;
 					k++;
 				}
 				if (ax[0] > ay[0])
@@ -310,15 +254,17 @@ public class Retroprojetor {
 				int ix, iy;
 				ix = iy = 1;
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
 					if (ax[ix] < ay[iy]) {
+
 						a = ax[ix++];
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
 						imgpixels[p2] += sinopixels[p1];
 						X--;
 					} else {
 						a = ay[iy++];
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
 						imgpixels[p2] += sinopixels[p1];
 
 						Y++;
@@ -345,12 +291,12 @@ public class Retroprojetor {
 		int X, Y;
 		int p1, p2;
 
-		for (int view = (view90 + 1); view < view180; view++) {
+		for (int view = (view90); view < view180; view++) {
 
 			phi = (float) ((view * 2 * Math.PI) / (nproj));
 			sphi = (float) Math.sin(phi);
 			cphi = (float) Math.cos(phi);
-			for (x = (float) (-xmax + 0.625); x <= (float) (xmax - 0.625); x += 0.25) {
+			for (x = (float) (-xmax + 0.425); x <= (float) (xmax - 0.425); x += 0.25) {
 				// for (x=(float)(-xmax); x<=(float)(xmax); x++) {
 				float fov = (float) Math.sqrt(Math.pow(xmax, 2)
 						- Math.pow(x, 2));
@@ -397,18 +343,22 @@ public class Retroprojetor {
 				int ix, iy;
 				ix = iy = 1;
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
+
 					if (ax[ix] < ay[iy]) {
+
 						// IJ.log("sino["+view+"]["+(int)(x)+"] =
 						// img["+Y+"]["+X+"]");
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
 						imgpixels[p2] += sinopixels[p1];
 						a = ax[ix++];
 						X--;
 					} else {
+
 						// IJ.log("sino["+view+"]["+(int)(x)+"] =
 						// img["+Y+"]["+X+"]");
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
 						imgpixels[p2] += sinopixels[p1];
 						a = ay[iy++];
 						Y--;
@@ -435,13 +385,13 @@ public class Retroprojetor {
 		int X, Y;
 		int p1, p2;
 
-		for (int view = (view180 + 1); view < view270; view++) {
+		for (int view = (view180); view < view270; view++) {
 
 			phi = (float) ((view * 2 * Math.PI) / (nproj));
 			sphi = (float) Math.sin(phi);
 			cphi = (float) Math.cos(phi);
 
-			for (x = (float) (-xmax + 0.625); x <= (float) (xmax - 0.625); x += 0.25) {
+			for (x = (float) (-xmax + 0.425); x <= (float) (xmax - 0.425); x += 0.25) {
 				// for (x=(float)(-xmax); x<=(float)(xmax); x++){
 				float fov = (float) Math.sqrt(Math.pow(xmax, 2)
 						- Math.pow(x, 2));
@@ -499,16 +449,25 @@ public class Retroprojetor {
 				ix = iy = 1;
 
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
+
 					if (ax[ix] < ay[iy]) {
+
 						a = ax[ix++];
+
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
+
 						imgpixels[p2] += sinopixels[p1];
+
 						X++;
 					} else {
 						a = ay[iy++];
+
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
+
 						imgpixels[p2] += sinopixels[p1];
+
 						Y--;
 					}
 				}
@@ -535,13 +494,13 @@ public class Retroprojetor {
 		int X, Y;
 		int p1, p2;
 
-		for (int view = (view270 + 1); view < nproj; view++) {
+		for (int view = (view270); view < nproj; view++) {
 
 			phi = (float) ((view * 2 * Math.PI) / (nproj));
 			sphi = (float) Math.sin(phi);
 			cphi = (float) Math.cos(phi);
 
-			for (x = (float) (-xmax + 0.625); x <= (float) (xmax - 0.625); x += 0.25) {
+			for (x = (float) (-xmax + 0.425); x <= (float) (xmax - 0.425); x += 0.25) {
 				// for (x=(float)(-xmax); x<=(float)(xmax); x++){
 				float fov = (float) Math.sqrt(Math.pow(xmax, 2)
 						- Math.pow(x, 2));
@@ -599,16 +558,27 @@ public class Retroprojetor {
 				ix = iy = 1;
 
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
+
 					if (ax[ix] < ay[iy]) {
+
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
+
 						imgpixels[p2] += sinopixels[p1];
+
 						a = ax[ix++];
+
 						X++;
+
 					} else {
+
+						p1 = mudaCoord(view, (int) Math.floor(x), true);
+						p2 = mudaCoord(Y, X, false);
+
 						imgpixels[p2] += sinopixels[p1];
+
 						a = ay[iy++];
+
 						Y++;
 					}
 
@@ -642,8 +612,8 @@ public class Retroprojetor {
 			for (int y = -ymax; y <= ymax; y++) {
 
 				s = (int) Math.floor(x + 0.5);
-				int p1 = Funcoes.mudaCoord(view, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(y, s, false, xmax, dim);
+				int p1 = mudaCoord(view, s, true);
+				int p2 = mudaCoord(y, s, false);
 				mi = mapa[p2];
 				if (mi == 0) {
 					A_ij = (float) Math.exp(-soma_mi);
@@ -653,8 +623,7 @@ public class Retroprojetor {
 					W = (float) ((A_ij / mi) * (1 - Math.exp(-mi)));
 					soma_mi += mi;
 				}
-				if (!Float.isNaN(imgpixels[p2]))
-					sinopixels[p1] += W * imgpixels[p2];
+				sinopixels[p1] += W * imgpixels[p2];
 			}
 		}
 	}
@@ -682,8 +651,8 @@ public class Retroprojetor {
 			for (int y = -fovmax; y <= fovmax; y++) {
 
 				s = (int) Math.floor(x + 0.5);
-				int p1 = Funcoes.mudaCoord(view90, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(s, -y, false, xmax, dim);
+				int p1 = mudaCoord(view90, s, true);
+				int p2 = mudaCoord(s, -y, false);
 				mi = mapa[p2];
 				if (mi == 0) {
 					A_ij = (float) Math.exp(-soma_mi);
@@ -693,8 +662,7 @@ public class Retroprojetor {
 					W = (float) ((A_ij / mi) * (1 - Math.exp(-mi)));
 					soma_mi += mi;
 				}
-				if (!Float.isNaN(imgpixels[p2]))
-					sinopixels[p1] += W * imgpixels[p2];
+				sinopixels[p1] += W * imgpixels[p2];
 			}
 		}
 	}
@@ -721,8 +689,8 @@ public class Retroprojetor {
 			for (int y = ymax; y >= -ymax; y--) {
 
 				s = (int) Math.floor(x + 0.5);
-				int p1 = Funcoes.mudaCoord(view180, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(y, -s, false, xmax, dim);
+				int p1 = mudaCoord(view180, s, true);
+				int p2 = mudaCoord(y, -s, false);
 				mi = mapa[p2];
 				if (mi == 0) {
 					A_ij = (float) Math.exp(-soma_mi);
@@ -732,8 +700,7 @@ public class Retroprojetor {
 					W = (float) ((A_ij / mi) * (1 - Math.exp(-mi)));
 					soma_mi += mi;
 				}
-				if (!Float.isNaN(imgpixels[p2]))
-					sinopixels[p1] += W * imgpixels[p2];
+				sinopixels[p1] += W * imgpixels[p2];
 			}
 		}
 	}
@@ -760,8 +727,8 @@ public class Retroprojetor {
 			for (int y = -ymax; y <= ymax; y++) {
 
 				s = (int) Math.floor(x + 0.5);
-				int p1 = Funcoes.mudaCoord(view270, s, true, xmax, dim);
-				int p2 = Funcoes.mudaCoord(-s, y, false, xmax, dim);
+				int p1 = mudaCoord(view270, s, true);
+				int p2 = mudaCoord(-s, y, false);
 
 				mi = mapa[p2];
 				if (mi == 0) {
@@ -772,15 +739,13 @@ public class Retroprojetor {
 					W = (float) ((A_ij / mi) * (1 - Math.exp(-mi)));
 					soma_mi += mi;
 				}
-				if (!Float.isNaN(imgpixels[p2]))
-					sinopixels[p1] += W * img[p2];
+				sinopixels[p1] += W * imgpixels[p2];
 			}
 		}
 	}
 
 	/**
-	 * Método para Quadrante um - view1 até view89 - com correção de
-	 * atenuação
+	 * Método para Quadrante um - view1 até view89 - com correção de atenuação
 	 * 
 	 * @param mapa
 	 *            array float com os valores da imagem de atenuação
@@ -849,43 +814,37 @@ public class Retroprojetor {
 				ix = iy = 1;
 				soma_mi_x = 0;
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
+					p1 = mudaCoord(view, (int) Math.floor(x), true);
+					p2 = mudaCoord(Y, X, false);
 					mi = mapa[p2];
-					try {
-						if (ax[ix] < ay[iy - 1]) {
-							d = (ax[ix] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							// IJ.log("quad1 W="+W);
-							sinopixels[p1] += W * imgpixels[p2];
-							a = ax[ix++];
-							X--;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						} else {
-							d = (ay[iy] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							// IJ.log("quad1 W="+W);
-							sinopixels[p1] += W * imgpixels[p2];
-							a = ay[iy++];
-							Y++;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						}
-
-					} catch (Exception e) {
-						a = 1;
+					if (ax[ix] < ay[iy]) {
+						d = (ax[ix] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						// IJ.log("quad1 W="+W);
+						sinopixels[p1] += W * imgpixels[p2];
+						a = ax[ix++];
+						X--;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
+					} else {
+						d = (ay[iy] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						// IJ.log("quad1 W="+W);
+						sinopixels[p1] += W * imgpixels[p2];
+						a = ay[iy++];
+						Y++;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
 					}
 				}
 			}
@@ -963,42 +922,37 @@ public class Retroprojetor {
 				ix = iy = 1;
 				soma_mi_x = 0;
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
+					p1 = mudaCoord(view, (int) Math.floor(x), true);
+					p2 = mudaCoord(Y, X, false);
 					mi = mapa[p2];
-					try {
-						if (ax[ix] < ay[iy - 1]) {
-							d = (ax[ix] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							sinopixels[p1] += W * imgpixels[p2];
-							// IJ.log("quad2 W="+W+ " sino="+sinopixels[p1]);
-							a = ax[ix++];
-							X--;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						} else {
-							d = (ay[iy] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							sinopixels[p1] += W * imgpixels[p2];
-							// IJ.log("quad2 W="+W+ " sino="+sinopixels[p1]);
-							a = ay[iy++];
-							Y--;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						}
-					} catch (Exception e) {
-						a = 1;
+					if (ax[ix] < ay[iy]) {
+						d = (ax[ix] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						sinopixels[p1] += W * imgpixels[p2];
+						// IJ.log("quad2 W="+W+ " sino="+sinopixels[p1]);
+						a = ax[ix++];
+						X--;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
+					} else {
+						d = (ay[iy] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						sinopixels[p1] += W * imgpixels[p2];
+						// IJ.log("quad2 W="+W+ " sino="+sinopixels[p1]);
+						a = ay[iy++];
+						Y--;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
 					}
 				}
 			}
@@ -1075,42 +1029,37 @@ public class Retroprojetor {
 				ix = iy = 1;
 				soma_mi_x = 0;
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
+					p1 = mudaCoord(view, (int) Math.floor(x), true);
+					p2 = mudaCoord(Y, X, false);
 					mi = mapa[p2];
-					try {
-						if (ax[ix] < ay[iy - 1]) {
-							d = (ax[ix] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							// IJ.log("quad3 W="+W);
-							sinopixels[p1] += W * imgpixels[p2];
-							a = ax[ix++];
-							X++;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						} else {
-							d = (ay[iy] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							// IJ.log("quad3 W="+W);
-							sinopixels[p1] += W * imgpixels[p2];
-							a = ay[iy++];
-							Y--;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						}
-					} catch (Exception e) {
-						a = 1;
+					if (ax[ix] < ay[iy]) {
+						d = (ax[ix] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						// IJ.log("quad3 W="+W);
+						sinopixels[p1] += W * imgpixels[p2];
+						a = ax[ix++];
+						X++;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
+					} else {
+						d = (ay[iy] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						// IJ.log("quad3 W="+W);
+						sinopixels[p1] += W * imgpixels[p2];
+						a = ay[iy++];
+						Y--;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
 					}
 				}
 			}
@@ -1186,66 +1135,61 @@ public class Retroprojetor {
 				ix = iy = 1;
 				soma_mi_x = 0;
 				while (a < 1) {
-					p1 = Funcoes.mudaCoord(view, (int) Math.floor(x), true,
-							xmax, dim);
-					p2 = Funcoes.mudaCoord(Y, X, false, xmax, dim);
+					p1 = mudaCoord(view, (int) Math.floor(x), true);
+					p2 = mudaCoord(Y, X, false);
 					mi = mapa[p2];
-					try {
-						if (ax[ix] < ay[iy - 1]) {
-							d = (ax[ix] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							// IJ.log("quad4 W="+W);
-							sinopixels[p1] += W * imgpixels[p2];
-							a = ax[ix++];
-							X++;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						} else {
-							d = (ay[iy] - a) * D;
-							soma_mi_x += d * mi;
-							A = (float) Math.exp(-soma_mi_x);
-							if (mi == 0)
-								W = A;
-							else
-								W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
-							// IJ.log("quad4 W="+W);
-							sinopixels[p1] += W * imgpixels[p2];
-							a = ay[iy++];
-							Y++;
-							// IJ.log("sino["+view+"]["+(int)(x)+"] =
-							// img["+Y+"]["+X+"]");
-						}
-					} catch (Exception e) {
-						a = 1;
+					if (ax[ix] < ay[iy]) {
+						d = (ax[ix] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						// IJ.log("quad4 W="+W);
+						sinopixels[p1] += W * imgpixels[p2];
+						a = ax[ix++];
+						X++;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
+					} else {
+						d = (ay[iy] - a) * D;
+						soma_mi_x += d * mi;
+						A = (float) Math.exp(-soma_mi_x);
+						if (mi == 0)
+							W = A;
+						else
+							W = (float) ((A / mi) * (1 - Math.exp(-mi * d)));
+						// IJ.log("quad4 W="+W);
+						sinopixels[p1] += W * imgpixels[p2];
+						a = ay[iy++];
+						Y++;
+						// IJ.log("sino["+view+"]["+(int)(x)+"] =
+						// img["+Y+"]["+X+"]");
 					}
 				}
 			}
 		}
 	}
 
-	// public static int mudaCoord(int l, int c, boolean s) {
-	//        
-	// int pixel = 0;
-	// if (s == false) {
-	// if ((l < -xmax) || (l > xmax) || (c > xmax) || (c < -xmax)) {
-	// return -1;
-	// }
-	// pixel = (l + xmax) * dim + (c + xmax);
-	// return pixel;
-	// } else {
-	//            
-	// if ((c > xmax) || (c < -xmax)) {
-	//                
-	// return -1;
-	// }
-	// pixel = (l * dim) + (c + xmax);
-	// } // fim do else
-	// return pixel;
-	// } // fim de mudaCoord
-	//    
+	public static int mudaCoord(int l, int c, boolean s) {
+
+		int pixel = 0;
+		if (s == false) {
+			if ((l < -xmax) || (l > xmax) || (c > xmax) || (c < -xmax)) {
+				return -1;
+			}
+			pixel = (l + xmax) * dim + (c + xmax);
+			return pixel;
+		} else {
+
+			if ((c > xmax) || (c < -xmax)) {
+
+				return -1;
+			}
+			pixel = (l * dim) + (c + xmax);
+		} // fim do else
+		return pixel;
+	} // fim de mudaCoord
+
 }

@@ -1,7 +1,6 @@
 package target;
 import funcoesNM.*;
 import funcoesNM.AbrirImagem;
-import ij.ImageJ;
 import nucMed.*;
 import ij.IJ;
 import ij.ImagePlus;
@@ -153,10 +152,9 @@ public class FBP_ extends javax.swing.JFrame implements
   /**
    * Função herdada da classe PlugIn do ImageJ.
    */
-  public void run(String args0) {
-    if ( args0.equals( "about" ) )
+  public void run(String str) {
+    if ( str.equals( "about" ) )
       IJ.showMessage("\n"+
-                     "     Plugin para recontrução de Imagens - NucMed v2.3\n "+
                      "        Desenvolvido por NIMed - PUCRS - Brasil\n "+
                      "\n     Homepage http://www.pucrs.br/fisica/nucmed ");
     else {
@@ -513,7 +511,7 @@ public class FBP_ extends javax.swing.JFrame implements
       imagemReconstruida.show();
       IJ.showTime(imp, startTime, " Tempo de Execu��o do FBP ");
       if (Funcoes.ativarMSE)
-        Funcoes.calculaMSE(null);
+        Funcoes.calculaMSE();
     }
     // selecao_rampa ();
   }
