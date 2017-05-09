@@ -1,0 +1,3 @@
+Plugins>RT SPECT, "FBP", target.FBP_
+Plugins>RT SPECT, "MLEM", target.ML_EM_
+Help>About Plugins, "NucMed...", target.FBP_("about")

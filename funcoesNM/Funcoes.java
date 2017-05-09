@@ -7,189 +7,336 @@ import ij.process.ImageProcessor;
 import java.awt.event.KeyEvent;
 
 /**
- * Classe criada para armazenar as funÁıes variadas que s„o utilizadas das
+ * Classe criada para armazenar as fun√ß√µes variadas que s√£o utilizadas das
  * outras classes.
- * 
- * @author Marcus VinÌcius da Silva Costa, Michele Alberton Andrade.
- * @version <b>1.3</b>
+ *
+ * @author Marcus Vin√≠cius da Silva Costa, Michele Alberton Andrade.
+ * @version <b>1.9</b>
  */
 
 public class Funcoes {
-
-	/**
-	 * Mensagens Utilizadas Pelos Programas de ReconstruÁ„o
-	 */
-	public static final String MENSAGEM_IMAGEM_NAO_COMPATIVEL = "The image is not compatible.";
-
-	public static final String NOME_PLUGIN = "RT SPECT";
-
-	public static final String MENSAGEM_ERRO_IMAGEM_MAPA = "Verifique os par‚metros, erro nas imagens";
-
-	/**
-	 * Tipos de Filtros utilizados na reconstruÁ„o por FBP
-	 */
-	public static final int FILTRO_RAMPA = 1;
-
-	public static final int FILTRO_BUTTERWORTH = 2;
-
-	public static final int FILTRO_SHEPP_LOGAN = 3;
-
-	public static final int FILTRO_HAMMING = 4;
-
-	/*
-	 * Constantes utilizadas para AlteraÁıes sobre diversos fatores
-	 */
-	public static final boolean debug = false;
-	public static final float CONST_FILTRO_HAMMING = (float)0.54;
-	/*
-	 * Relacionado com a abertura ou do corte direto relativo ao filtro utilizado no mÈtodo FBP.
-	 * 
-	 * Se true, ativa o corte no filtro referente a frequÍncia de corte estipulada.
-	 * Se false, libera a filtragem atÈ atingido o tamanho m·ximo.
-	 */
-	public static final boolean filtroCorte = true;
-	
-	/**
-	 * Procedimento utilizado para girar uma imagem 90 graus para a esquerda.
-	 * 
-	 * @param imp :
-	 *            Recebe um ImagePlus com a imagem a ser rotada.
-	 */
-	public static void Rotar(ImagePlus imp) {
-		// int slices;
-		ImageProcessor ip;
-		Transformer trans = new Transformer();
-		int resultado = trans.setup("left", imp);
-		if (!((resultado - PlugInFilter.DOES_ALL - PlugInFilter.NO_UNDO) % 128 == 0))
-			return;
-		ip = imp.getStack().getProcessor(1);
-		trans.run(ip);
-	}
-
-	/**
-	 * FunÁ„o utilizada para alterar o caracter de "." para "," para o ImageJ
-	 * adquirir o nome na opÁ„o de salvar imagem, retorna a String modificada.
-	 * 
-	 * @param nome :
-	 *            Par‚metro com o nome inicial da imagem a ser alterada.
-	 * @return Retorna o nome da imagem alterada.
-	 */
-	public static String AlteraNomeImagem(String nome) {
-		char[] nome_c = new char[nome.length()];
-		char[] titulo_c = new char[nome.length()];
-
-		nome.getChars(0, nome.length(), titulo_c, 0);
-		nome.getChars(0, nome.length(), nome_c, 0);
-		for (int c = 0; c < nome.length(); c++) {
-			if (nome_c[c] == '.')
-				titulo_c[c] = ',';
-			else
-				titulo_c[c] = nome_c[c];
-		}
-		return String.valueOf(titulo_c);
-	}
-
-	/**
-	 * FunÁ„o para testar se a imagem a ser aberta tem os par‚metros corretos,
-	 * neste caso se o tamanho em x da imagem e m˙ltiplo de 2.
-	 * 
-	 * @param largura :
-	 *            largura da imagem a ser testada.
-	 * @return Retorna se a imagem passou no teste ou n„o.
-	 */
-	public static boolean isPowerOf2(float largura) {
-
-		float aux = largura % 2;
-		while ((aux == 0) && (largura > 1)) {
-			largura = (largura / 2);
-			aux = (largura % 2);
-		}
-		if (largura == 1)
-			return (true);
-		else
-			return (false);
-	}
-
-	/**
-	 * FunÁ„o para calcular o tamanho do campo de vis„o.
-	 * 
-	 * @param x :
-	 *            Informa o valor do x na imagem;
-	 * @param y :
-	 *            Informa o valor do y na imagem;
-	 * @return Retorna o campo de vis„o em uma variavel int.
-	 */
-	public static int calculaFOV(int x, int y) {
-
-		int fov = (int) (Math.sqrt(x * x - y * y) + 0.5);
-		return fov;
-	}
-
-	/**
-	 * FunÁ„o para verificar a posiÁ„o de inserÁ„o do pixel na imagem.
-	 * 
-	 * @param l
-	 *            Valor da linha da imagem selecionada.
-	 * @param c
-	 *            Valor do coluna da imagem selecionada.
-	 * @param s
-	 *            Informa se a imagem selecionada È um sinograma ou n„o.
-	 * @param xmax
-	 *            Recebe o xmax;
-	 * @param dim
-	 *            Valor da largura da imagem selecionada.
-	 * @return Retorna a posiÁ„o do vetor onde deve ser colocado o valor do
-	 *         pixel;
-	 */
-	public static int mudaCoord(int l, int c, boolean s, int xmax, int dim) {
-		int pixel = 0;
-		if (s == false) {
-			if ((l < -xmax) || (l > xmax) || (c > xmax) || (c < -xmax))
-				return -1;
-			pixel = (l + xmax) * dim + (c + xmax);
-			return pixel;
-		} else {
-			if ((c > xmax) || (c < -xmax))
-				return -1;
-			pixel = (l * dim) + (c + xmax);
-			return pixel;
-		}
-	}
-
-	/**
-	 * Procedimento utilizado para limitar o tamanho de componentes TextField.
-	 * 
-	 * @param evt :
-	 *            Par‚metro tratado pelo JAVA.
-	 * @param tf :
-	 *            Objeto que chamou a funÁ„o.
-	 * @param tamanho :
-	 *            Tamanho m·ximo de caracteres.
-	 */
-	public static void limitaTextField(java.awt.event.KeyEvent evt,
-			javax.swing.JTextField tf, int tamanho) {
-
-		if (evt.getKeyChar() == ',')
-			evt.setKeyChar('.'); // troca o caracter ","
-		// por "."
-		if (evt.getKeyChar() != KeyEvent.VK_BACK_SPACE) { // deixa o usuario
-			// precionar
-			// backspace
-			if (evt.getSource().equals(tf))
-				if (tf.getText().length() > tamanho) {
-					tf.setText(tf.getText().concat(
-							Character.toString(evt.getKeyChar())));
-					evt.setKeyChar(' ');
-					tf.transferFocus();
-				} else if (tf.getText().length() >= tamanho) {
-					evt.setKeyChar(' ');
-					evt.consume();
-				}
-		}
-		if (evt.getKeyChar() == KeyEvent.VK_ENTER) // altera o focus caso o
-													// usuario
-			// tecle enter;
-			tf.transferFocus();
-	}
-
+    
+    /**
+     * Mensagens Utilizadas Pelos Programas de Reconstru√ß√£o
+     */
+    public static final String MENSAGEM_IMAGEM_NAO_COMPATIVEL = "The image is not compatible";
+    
+    public static final String NOME_PLUGIN = "RT SPECT";
+    
+    public static final String MENSAGEM_ERRO_IMAGEM_MAPA = "Verifique os parametros, erro ao adquirir a imagem do Mapa de Atenuacao";
+    
+    public static final String MENSAGEM_ERRO_ABRIR_IMAGEM = "Verifique os parametros, erro ao adquirir a imagem";
+    
+    public static final String MSE_LABEL_COMBO1 = "Imagem Original";
+    
+    public static final String MSE_LABEL_COMBO2 = "Imagem Reconstruida";
+    
+    /**
+     * Tipos de Filtros utilizados na reconstru√ß√£o por FBP
+     */
+    public static final int FILTRO_RAMPA = 1;
+    
+    public static final int FILTRO_BUTTERWORTH = 2;
+    
+    public static final int FILTRO_SHEPP_LOGAN = 3;
+    
+    public static final int FILTRO_HAMMING = 4;
+    
+        /*
+         * Constantes utilizadas para Altera√ß√µes sobre diversos fatores
+         */
+    public static final boolean debug = true;
+    
+    public static final boolean ativarVSA = false;
+    
+    public static final boolean ativarMSE = false;
+    
+    public static final float CONST_FILTRO_HAMMING = (float)0.54;
+        /*
+         * Relacionado com a abertura ou do corte direto relativo ao filtro utilizado no m√©todo FBP.
+         *
+         * Se true, ativa o corte no filtro referente a frequ√™ncia de corte estipulada.
+         * Se false, libera a filtragem at√© atingido o tamanho m√°ximo.
+         */
+    public static final boolean filtroCorte = true;
+    
+    /**
+     * Procedimento utilizado para girar uma imagem 90 graus para a esquerda.
+     *
+     * @param imp :
+     *            Recebe um ImagePlus com a imagem a ser rotada.
+     */
+    public static void Rotar(ImagePlus imp) {
+        // int slices;
+        ImageProcessor ip;
+        Transformer trans = new Transformer();
+        int resultado = trans.setup("left", imp);
+        if (!((resultado - PlugInFilter.DOES_ALL - PlugInFilter.NO_UNDO) % 128 == 0))
+            return;
+        ip = imp.getStack().getProcessor(1);
+        trans.run(ip);
+    }
+    
+    /**
+     * Fun√ß√£o utilizada para alterar o caracter de "." para "," para o ImageJ
+     * adquirir o nome na op√ß√£o de salvar imagem.
+     *
+     * @param nome
+     *            Par√¢metro com o nome inicial da imagem a ser alterada.
+     * @return Retorna o nome da imagem alterada.
+     */
+    public static String AlteraNomeImagem(String nome) {
+        char[] nome_c = new char[nome.length()];
+        char[] titulo_c = new char[nome.length()];
+        
+        nome.getChars(0, nome.length(), titulo_c, 0);
+        nome.getChars(0, nome.length(), nome_c, 0);
+        for (int c = 0; c < nome.length(); c++) {
+            if (nome_c[c] == '.')
+                titulo_c[c] = ',';
+            else
+                titulo_c[c] = nome_c[c];
+        }
+        return String.valueOf(titulo_c);
+    }
+    
+    /**
+     * Fun√ß√£o para testar se a imagem a ser aberta tem os par√¢metros corretos,
+     * neste caso se o tamanho em x da imagem e m√∫ltiplo de 2.
+     *
+     * @param largura :
+     *            largura da imagem a ser testada.
+     * @return Retorna se a imagem passou no teste.
+     */
+    public static boolean isPowerOf2(float largura) {
+        
+        float aux = largura % 2;
+        while ((aux == 0) && (largura > 1)) {
+            largura = (largura / 2);
+            aux = (largura % 2);
+        }
+        if (largura == 1)
+            return (true);
+        else
+            return (false);
+    }
+    
+    /**
+     * Fun√ß√£oo para calcular o tamanho do campo de vis√£o.
+     *
+     * @param x :
+     *            Informa o valor do x na imagem;
+     * @param y :
+     *            Informa o valor do y na imagem;
+     * @return Retorna o campo de vis√£o em uma variavel int.
+     */
+    public static int calculaFOV(int x, int y) {
+        
+        int fov = (int) (Math.sqrt(x * x - y * y) + 0.5);
+        return fov;
+    }
+    
+    /**
+     * Fun√ß√£o para verificar a posi√ß√£o de insers√£o do pixel na imagem.
+     *
+     * @param l
+     *            Valor da linha da imagem selecionada.
+     * @param c
+     *            Valor do coluna da imagem selecionada.
+     * @param s
+     *            Informa se a imagem selecionada √© um sinograma.
+     * @param xmax
+     *            Recebe o xmax;
+     * @param dim
+     *            Valor da largura da imagem selecionada.
+     * @return Retorna a posi√ß√£o do vetor onde deve ser colocado o valor do
+     *         pixel;
+     */
+    public static int mudaCoord(int l, int c, boolean s, int xmax, int dim) {
+        int pixel = 0;
+        if (s == false) {
+            if ((l < -xmax) || (l > xmax) || (c > xmax) || (c < -xmax))
+                return -1;
+            pixel = (l + xmax) * dim + (c + xmax);
+            return pixel;
+        } else {
+            if ((c > xmax) || (c < -xmax))
+                return -1;
+            pixel = (l * dim) + (c + xmax);
+            return pixel;
+        }
+    }
+    
+    /**
+     * Procedimento utilizado para limitar o tamanho de componentes TextField.
+     *
+     * @param evt :
+     *            ParÔøΩmetro tratado pelo JAVA.
+     * @param tf :
+     *            Objeto que chamou a fun√ß√£o.
+     * @param tamanho :
+     *            Tamanho m√°ximo de caracteres.
+     */
+    public static void limitaTextField(java.awt.event.KeyEvent evt,
+            javax.swing.JTextField tf, int tamanho) {
+        
+        if (evt.getKeyChar() == ',')
+            evt.setKeyChar('.'); // troca o caracter ","
+        // por "."
+        if (evt.getKeyChar() != KeyEvent.VK_BACK_SPACE) { // deixa o usuario
+            // precionar
+            // backspace
+            if (evt.getSource().equals(tf))
+                if (tf.getText().length() > tamanho) {
+                tf.setText(tf.getText().concat(
+                        Character.toString(evt.getKeyChar())));
+                evt.setKeyChar(' ');
+                tf.transferFocus();
+                } else if (tf.getText().length() >= tamanho) {
+                evt.setKeyChar(' ');
+                evt.consume();
+                }
+        }
+        if (evt.getKeyChar() == KeyEvent.VK_ENTER) // altera o focus caso o
+            // usuario
+            // tecle enter;
+            tf.transferFocus();
+    }
+    
+    /**
+     * M√©todo utilizado para calcular o desvio padr√£o da imagem reconstruida.
+     *
+     * @param imgReconstruida
+     *            ImageProcessor da imagem reconstruida
+     * @return
+     *            Retorna o resultado do calculo do desvio padr√£o da imagem reconstruida.
+     */
+    public static double calculaDesvPad(ImagePlus imgReconstruida) {
+        
+        double media = calculaMedia( imgReconstruida.getProcessor() );
+        float[] img = (float[]) imgReconstruida.getProcessor().getPixels();
+        float somatorio = 0;
+        
+        for (int i=0; i<img.length; i++) {
+            float value = img[i];
+            if ( Float.isNaN(value) )
+                value = 0;
+            somatorio += Math.pow((value - media),2);
+        }
+        
+        double desvioPadrao = Math.sqrt(somatorio/img.length);
+        
+        return desvioPadrao;
+    }
+    
+    /**
+     * M√©todo utilizado para calcular a m√©dia referente a imagem reconstruida.
+     *
+     * @param imgReconstruida
+     *            ImageProcessor da imagem reconstruida
+     * @return
+     *            Retorna o resultado do calculo de m√©dia da imagem reconstruida.
+     */
+    public static double calculaMedia(ImageProcessor imgReconstruida) {
+        
+        float[] img = (float[]) imgReconstruida.getPixels();
+        float total = 0, media;
+        
+        for (int i=0; i<img.length; i++) {
+            float value = img[i];
+            if ( Float.isNaN(value) )
+                value = 0;
+            total += value;
+        }
+        
+        media = total/img.length;
+        
+        return media;
+    }
+    
+    /**
+     * M√©todo utilizado para calcular a m√©dia referente a imagem reconstruida.
+     * @param imgs Vetor com imagens. Posicao [0] Imagem Original
+     *                           [1] Imagem Reconstruido
+     */
+    public static void calculaMSE(ImagePlus[] imgs) {
+        double total = 0;
+        if( imgs == null ) {
+            AbrirImagem abrir = new AbrirImagem();
+            imgs = abrir.Abrir(MSE_LABEL_COMBO1,MSE_LABEL_COMBO2, true, true);
+        }
+        if ( (imgs[0]==null) || (imgs[1]==null) ) {
+            ij.IJ.showMessage("Erro ao abrir as imagens para calculo do MSE");
+            return;
+        }
+        
+        float[] imgOrig = (float[]) imgs[0].getProcessor().getPixels();
+        float[] imgRec = (float[])  imgs[1].getProcessor().getPixels();
+        
+        for (int i=0; i<imgRec.length; i++) {
+            float valueOrig = imgOrig[i];
+            if ( Float.isNaN(valueOrig) )
+                valueOrig = 0;
+            float valueRec = imgRec[i];
+            if ( Float.isNaN(valueRec) )
+                valueRec = 0;
+            total += Math.pow((valueRec - valueOrig),2);
+        }
+        
+        double MSE = total/imgRec.length*imgOrig.length;
+        ij.IJ.log("MSE= "+(MSE));
+        ij.IJ.log("DP= "+calculaDesvPad(imgs[1])+"\n\n");
+    }
+    
+    /*
+     *
+     * Metodo para calcular a verossimilhanca entre o sinograma de cada iteracao com o sinograma original
+     *
+     */
+    /**
+     * Funcao para calcular a verossimilhanca entre as imagens do sinograma original e 
+     * o sinograma reconstruido
+     * @param imgs Vetor com imagens. posicao  [0] sinograma Original
+     *                            [1] sinograma Reconstruido
+     */
+    public static void calculaVSA(ImagePlus[] imgs) {
+        
+        double vsa = 0.0;
+        for (int i=0;i<imgs[0].getWidth();i++) {
+            for(int j=0;j<imgs[0].getHeight();j++) {
+                
+                float dSinoIter = Float.intBitsToFloat(imgs[1].getProcessor().getPixel(i,j));
+                if ( Double.isNaN(dSinoIter))
+                    dSinoIter = 0;
+                
+                float dSinoOrig = Float.intBitsToFloat(imgs[0].getProcessor().getPixel(i,j));
+                if ( Double.isNaN(dSinoOrig))
+                    dSinoOrig = 0;
+                
+                double logarit = Math.log10(Math.abs(dSinoIter));
+                if ((Double.isNaN(logarit) ) || (Double.isInfinite(logarit)) )
+                    logarit = 0;
+                vsa += (-dSinoIter)+dSinoOrig*logarit;
+            }
+        }
+        ij.IJ.log("VSA= "+(vsa)+"\n");
+        
+    }
+    public static void ContaNaNeInfinity(ImageProcessor ip) {
+    
+        int NaN = 0;
+        int Infinity = 0;
+        float[] aIP = (float[])ip.getPixels();
+        for (int i=0;i<aIP.length;i++) {
+            if (Float.isNaN(aIP[i]))
+                NaN++;
+            if (Float.isInfinite(aIP[i]))
+                Infinity++;
+            
+            ij.IJ.log("quantidade de NaN="+NaN+" quantidade de Infinity= "+Infinity);
+        }
+            
+    }
 }
+        
+        

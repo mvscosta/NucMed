@@ -5,8 +5,8 @@ package funcoesNM;
  * Classe Criada para executar a transformada de Fourier e a transformada
  * inversa.
  *
- * @author  Michele Alberton Andrade, Marcus Vinícius da Silva Costa
- * @version <b>1.3</b>
+ * @author  Michele Alberton Andrade, Marcus VinÃ­cius da Silva Costa
+ * @version <b>1.7</b>
  */
 
 public class Fourier1D {
@@ -110,7 +110,7 @@ public class Fourier1D {
 	}
 
 	/**
-	 * Função da transformada de Fourier.
+	 * FunÃ§Ã£o da transformada de Fourier.
 	 * 
 	 * @param twoPi
 	 *            TWO_PI for transform, -TWO_PI for inverse transform.

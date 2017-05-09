@@ -1,11 +1,11 @@
 package funcoesNM;
 
 /**
- * Classe criada para o tratamento de números imaginários, devido a função de
+ * Classe criada para o tratamento de nÃºmeros imaginÃ¡rios, devido a funÃ§Ã£o de
  * transformada de Fourier.
  * 
- * @author  Michele Alberton Andrade, Marcus Vinícius da Silva Costa.
- * @version <b>1.3</b>
+ * @author  Michele Alberton Andrade, Marcus VinÃ­cius da Silva Costa.
+ * @version <b>1.7</b>
  */
 
 public class Complexo {
