@@ -43,14 +43,54 @@ public class AbrirImagem {
   public AbrirImagem() {
     
     combo1 = new combo();
-    combo1.titulo = "Imagem Sinograma";
+    combo1.titulo = "";
     combo1.ativo = true;
     
     combo2 = new combo();
-    combo2.titulo = "Imagem do mapa de atenuacao";
+    combo2.titulo = "";
     combo2.ativo = false;
     
     dlg = new JDialog(ij.IJ.getInstance(), "", true);
+  }
+  
+  /**
+   * Função abrir imagem para a classe ML_EM_.
+   *
+   * @return Retorna um vetor de ImagePlus com a imagem selecionada em primeira
+   *         posição e o mapa de atenuação em segunda posição.
+   */
+  public static ImagePlus[] Abrir(String labelCombo1, String labelCombo2, boolean combo1Ativo, boolean combo2Ativo) {
+    
+    int[] wList = null;
+    wList = WindowManager.getIDList();
+    
+    combo1.titulo = labelCombo1;
+    combo2.titulo = labelCombo2;
+    
+    combo1.ativo = combo1Ativo;
+    combo2.ativo = combo2Ativo;
+    
+    ImagePlus[] imagens = new ImagePlus[2];
+    if (wList == null) {
+      IJ.noImage();
+      return imagens;
+    } else {
+      
+      if (wList.length > 1 ) {
+        initComponents();
+        dlg.setVisible(true);
+        dlg.dispose();
+      } else if( (wList.length == 1) && (combo2.ativo) ) {
+        IJ.error(Funcoes.NOME_PLUGIN,Funcoes.MENSAGEM_ERRO_ABRIR_IMAGEM);
+        return imagens;
+      }
+      if (wList.length == 1) {
+        btnOkActionPerformed();
+      }
+    }     
+    imagens[0] = combo1.imagemSelecionada;
+    imagens[1] = combo2.imagemSelecionada;
+    return imagens;
   }
   
   /**
@@ -62,6 +102,7 @@ public class AbrirImagem {
   public static ImagePlus Abrir_FBP() {
     
     int[] wList = null;
+    combo1.titulo = "Imagem Sinograma";
     wList = WindowManager.getIDList();
     if (wList == null) {
       IJ.noImage();
@@ -90,9 +131,10 @@ public class AbrirImagem {
     
     int[] wList = null;
     wList = WindowManager.getIDList();
+    combo1.titulo = "Imagem Sinograma";
+    combo2.titulo = "Imagem do mapa de atenuacao";
+
     ImagePlus[] imagens = new ImagePlus[2];
-    combo1.titulo = "Imagem Original";
-    combo2.titulo = "Imagem Reconstruida";
     if (wList == null) {
       IJ.noImage();
       return imagens;
@@ -110,7 +152,6 @@ public class AbrirImagem {
         btnOkActionPerformed();
       }
     }
-    
     imagens[0] = combo1.imagemSelecionada;
     imagens[1] = combo2.imagemSelecionada;
     return imagens;

@@ -1,6 +1,7 @@
 package target;
 import funcoesNM.*;
 import funcoesNM.AbrirImagem;
+import ij.ImageJ;
 import nucMed.*;
 import ij.IJ;
 import ij.ImagePlus;
@@ -511,7 +512,7 @@ public class FBP_ extends javax.swing.JFrame implements
       imagemReconstruida.show();
       IJ.showTime(imp, startTime, " Tempo de Execu��o do FBP ");
       if (Funcoes.ativarMSE)
-        Funcoes.calculaMSE();
+        Funcoes.calculaMSE(null);
     }
     // selecao_rampa ();
   }
